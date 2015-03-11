@@ -7,8 +7,7 @@
 
 #include "headers/SocketBroker.h"
 #include "headers/ConfigReader.h"
-#include <iostream>
-#include <string>
+
 #include <thread>
 #include <fstream>
 #include <map>
@@ -16,54 +15,27 @@
 
 using namespace std;
 
-void time_printer()
-{
-  time_t t = time(0);   // get time now
-  struct tm * now = localtime( & t );
-  std::cout << (now->tm_year + 1900) << '-' << (now->tm_mon + 1) << '-'<<  now->tm_mday << ':' << ':';
-  std::cout << now->tm_hour << '-' << (now->tm_min) << '-'<<  now->tm_sec<< endl;
-}
-
 void client(int portno, std::string hostname)
 {
-  /*
-  std::string inputMessage;
-
-  while(1)
-  {
-    std::cout << "\nWaiting for user input" << std::endl;
-    std::getline( std::cin, inputMessage);
-    std::cout << "User Input: " << inputMessage << "\n";
-  }
-  */
   ClientSocket client;
+  std::string serverOutput;
 
   while(1)
   {
     client.create();
     client.connect(portno, hostname);
 
-    client.write();
-    client.read();
+    client.write("test");
+    serverOutput = client.read();
   }
-
+  client.close();
 }
 
 void server(int portno)
 {
-  /*
-  std::string inputMessage;
-
-  while(1)
-  {
-    std::cout << "Waiting for input connections: " << std::endl;
-    std::getline( std::cin, inputMessage);
-    std::cout << "User Input: " << inputMessage << "\n";
-  }
-  */
-
   ServerSocket server;
   ServerSocket newserver;
+  std::string inputCommand;
 
   server.create();
   server.bind(portno);
@@ -73,8 +45,8 @@ void server(int portno)
   {
   server.accept(newserver);
 
-  newserver.read();
-  newserver.write();
+  inputCommand = newserver.read();
+  newserver.write(inputCommand);
   newserver.close();
   }
   server.close();

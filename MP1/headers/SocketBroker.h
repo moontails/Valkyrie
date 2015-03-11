@@ -16,6 +16,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
 
 const int MAXHOSTNAME = 200;
 const int MAXCONNECTIONS = 5;
@@ -36,13 +38,16 @@ public:
 	void close();
 
 	// Function to read from a socket
-	virtual void read() = 0;
+	virtual std::string read() = 0;
 
 	// Function to write from a socket
-	virtual void write() = 0;
+	virtual void write(std::string) = 0;
 
 	// Function to check if created socket is valid or not
 	bool is_valid() const;
+
+	// Function to print time
+	std::string time_printer();
 
 protected:
 	int sb_sockfd;
@@ -54,8 +59,8 @@ class ClientSocket : public SocketBroker
 public:
 	void create();
 	void connect(int port, std::string host);
-	void read();
-	void write();
+	std::string read();
+	void write(std::string);
 };
 
 class ServerSocket : public SocketBroker
@@ -65,8 +70,8 @@ public:
 	void bind(int port);
 	void listen();
 	void accept(ServerSocket& );
-	void read();
-	void write();
+	std::string read();
+	void write(std::string);
 	//void send ( const std::string );
 	//int recv ( std::string& );
 };

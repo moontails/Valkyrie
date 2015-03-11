@@ -8,16 +8,7 @@
  */
 
 #include "headers/SocketBroker.h"
-#include <iostream>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <errno.h>
-#include <fcntl.h>
+#include "headers/MessageHandler.h"
 
 using namespace std;
 
@@ -48,6 +39,12 @@ void SocketBroker::close()
 	::close(sb_sockfd);
 }
 
+std::string SocketBroker::time_printer()
+{
+	time_t t = time(0);   // get time now
+	return asctime(localtime(&t));
+}
+
 /*
 * ServerSocket class method implementations
 */
@@ -56,12 +53,12 @@ void ServerSocket::create()
 {
 	if( ( sb_sockfd = ::socket( AF_INET, SOCK_STREAM, 0)) < 0)
 	{
-		std::cout << "Could not create Socket" << std::endl;
+		std::cout << "\nCould not create Socket" << std::endl;
 		exit(0);
 	}
 	else
 	{
-		std::cout << "New ServerSocket created" << std::endl;
+		std::cout << "\nNew ServerSocket created" << std::endl;
 	}
 
 }
@@ -71,7 +68,7 @@ void ServerSocket::bind(int port)
 	// Check if a socket was created successfully
 	if ( ! is_valid() )
 	{
-		std::cout << "Create socket before bind" << std::endl;
+		std::cout << "\nCreate socket before bind" << std::endl;
 		exit(0);
 	}
 
@@ -85,7 +82,7 @@ void ServerSocket::bind(int port)
 	if ( bind_return < 0 )
 	{
 		//perror("Bind Failed");
-		std::cout << "Bind Failed" << std::endl;
+		std::cout << "\nBind Failed" << std::endl;
 		exit(0);
 	}
 
@@ -96,7 +93,7 @@ void ServerSocket::listen()
 {
 	if ( ! is_valid() )
 	{
-		std::cout << "Create socket before listen" << std::endl;
+		std::cout << "\nCreate socket before listen" << std::endl;
 		exit(0);
 	}
 
@@ -105,7 +102,7 @@ void ServerSocket::listen()
 
 	if ( listen_return < 0 )
 	{
-		std::cout << "Listen Failed" << std::endl;
+		std::cout << "\nListen Failed" << std::endl;
 		exit(0);
 	}
 
@@ -119,13 +116,13 @@ void ServerSocket::accept(ServerSocket& new_SocketBroker)
 
 	if ( new_SocketBroker.sb_sockfd <= 0 )
 	{
-		std::cout << "Accept Failed" << std::endl;
+		std::cout << "\nAccept Failed" << std::endl;
 		exit(0);
 	}
 
 }
 
-void ServerSocket::read()
+std::string ServerSocket::read()
 {
 	char buffer[256];
 	int n;
@@ -136,21 +133,36 @@ void ServerSocket::read()
 
 	if (n < 0)
 	{
-		std::cout << "Reading at server socket Failed" << std::endl;
+		std::cout << "\nReading at server socket Failed" << std::endl;
+		exit(0);
 	}
-	std::cout << "Here is the message: " << buffer << std::endl;
 
+	std::string inputMessage(buffer);
+	int pos1 = inputMessage.find(':');
+	int pos2 = inputMessage.find_last_of(':');
+	std::string message = inputMessage.substr(pos1+1, pos2-pos1-1);
+	std::string nodeName = inputMessage.substr(pos2 + 1);
+
+	std::cout << "\nReceived " << message << " from " << nodeName << " system time is " << SocketBroker::time_printer() << std::endl;
+	return inputMessage;
 }
 
-void ServerSocket::write()
+void ServerSocket::write(std::string outputMessage)
 {
+	std::string result;
+
+	int pos1 = outputMessage.find(':');
+	int pos2 = outputMessage.find_last_of(':');
+	std::string nodeName = outputMessage.substr(pos2 + 1);
+	result = "Sent " + outputMessage.substr(pos1+1, pos2-pos1-1) + " to " + nodeName + " " + SocketBroker::time_printer();
 	int n;
 
-	n = ::write(sb_sockfd,"I got your message",18);
+	n = ::write(sb_sockfd,result.c_str(),result.length());
 
 	if (n < 0)
 	{
-		std::cout << "Writing at server socket Failed" << std::endl;
+		std::cout << "\nWriting at server socket Failed" << std::endl;
+		exit(0);
 	}
 
 }
@@ -208,12 +220,12 @@ void ClientSocket::create()
 {
 	if( ( sb_sockfd = ::socket( AF_INET, SOCK_STREAM, 0)) < 0)
 	{
-		std::cout << "Could not create Socket" << std::endl;
+		std::cout << "\nCould not create Socket" << std::endl;
 		exit(0);
 	}
 	else
 	{
-		std::cout << "New ClientSocket created" << std::endl;
+		std::cout << "\nNew ClientSocket created" << std::endl;
 	}
 
 }
@@ -222,7 +234,7 @@ void ClientSocket::connect(int port, std::string hostname)
 {
 	if ( ! is_valid() )
 	{
-		std::cout << "Socket Error in connect" << std::endl;
+		std::cout << "\nSocket Error in connect" << std::endl;
 		exit(0);
 	}
 
@@ -234,7 +246,7 @@ void ClientSocket::connect(int port, std::string hostname)
 	server = gethostbyname(hostname.c_str());
 	if(server == NULL)
 	{
-		std::cout << "ERROR, no such host" << std::endl;
+		std::cout << "\nERROR, no such host" << std::endl;
 		exit(0);
 	}
 
@@ -250,13 +262,13 @@ void ClientSocket::connect(int port, std::string hostname)
 
 	if(::connect(sb_sockfd, (sockaddr *)&sb_sockaddr, sizeof(sb_sockaddr) ) < 0 )
 	{
-		std::cout << "Connect Failed" << std::endl;
+		std::cout << "\nConnect Failed" << std::endl;
 		exit(0);
 	}
 
 }
 
-void ClientSocket::read()
+std::string ClientSocket::read()
 {
 	char buffer[256];
 	int n;
@@ -267,25 +279,29 @@ void ClientSocket::read()
 
 	if (n < 0)
 	{
-		std::cout << "Reading at client socket Failed" << std::endl;
+		std::cout << "\nReading at client socket Failed" << std::endl;
+		exit(0);
 	}
 
+	std::string unpack(buffer);
+	std::cout << buffer;
+	return unpack;
 }
 
-void ClientSocket::write()
+void ClientSocket::write(std::string temp)
 {
-	char buffer[256];
+	std::string inputMessage;
 	int n;
 
-	printf("Please enter the message: ");
-	bzero(buffer,256);
-	fgets(buffer,255,stdin);
-
-	n = ::write(sb_sockfd,buffer,strlen(buffer));
+	std::cout << "\nPlease enter the message: ";
+	std::getline(std::cin, inputMessage);
+	inputMessage = MessageHandler::serialize(inputMessage);
+	n = ::write(sb_sockfd,inputMessage.c_str(),inputMessage.length());
 
 	if (n < 0)
 	{
-		std::cout << "Writing at client socket Failed" << std::endl;
+		std::cout << "\nWriting at client socket Failed" << std::endl;
+		exit(0);
 	}
 
 }

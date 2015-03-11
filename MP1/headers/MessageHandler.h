@@ -22,7 +22,7 @@ class MessageHandler
 public:
 	operationType opType;
 	static std::string serialize(std::string inputMessage);
-	void deserialize(std::string inputMessage);
+	static std::string deserialize(std::string inputMessage);
 
 };
 
