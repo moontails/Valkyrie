@@ -29,21 +29,19 @@ public:
 	SocketBroker();
 	virtual ~SocketBroker();
 
-	bool create();
+	// Function to create a socket
+	virtual void create() = 0;
 
-	// Helper functions to instantiate server
-	virtual bool bind ( const int port ) = 0;
-	virtual bool listen() const =0;
-	virtual bool accept ( SocketBroker& ) const = 0;
-	virtual bool send ( const std::string ) const = 0;
-	virtual int recv ( std::string& ) const = 0;
+	// Function to close a socket
+	void close();
 
-	// Helper functions to instantiate client
-	virtual bool connect ( const std::string host, const int port ) = 0;
-	virtual int read() = 0;
-	virtual int write() = 0;
+	// Function to read from a socket
+	virtual void read() = 0;
 
-	// Helper function to check if created socket is valid or not
+	// Function to write from a socket
+	virtual void write() = 0;
+
+	// Function to check if created socket is valid or not
 	bool is_valid() const;
 
 protected:
@@ -53,20 +51,24 @@ protected:
 
 class ClientSocket : public SocketBroker
 {
-	// Helper functions to instantiate client
-	bool connect ( const std::string host, const int port );
-	int read();
-	int write();
+public:
+	void create();
+	void connect(int port, std::string host);
+	void read();
+	void write();
 };
 
 class ServerSocket : public SocketBroker
 {
-	// Helper functions to instantiate server
-	bool bind ( const int port );
-	bool listen() const;
-	bool accept ( SocketBroker& ) const;
-	bool send ( const std::string ) const;
-	int recv ( std::string& ) const;
+public:
+	void create();
+	void bind(int port);
+	void listen();
+	void accept(ServerSocket& );
+	void read();
+	void write();
+	//void send ( const std::string );
+	//int recv ( std::string& );
 };
 
 #endif /* SOCKETBROKER_H_ */
