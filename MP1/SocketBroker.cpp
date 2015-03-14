@@ -85,18 +85,19 @@ void ServerSocket::bind(int port)
 		std::cout << "\nBind Failed" << std::endl;
 		exit(0);
 	}
-
+	std::cout << "\nBinded to port: " << port << std::endl;
 }
 
 
 void ServerSocket::listen()
 {
+
 	if ( ! is_valid() )
 	{
 		std::cout << "\nCreate socket before listen" << std::endl;
 		exit(0);
 	}
-
+	std::cout << "\nListening:" << std::endl;
 	int listen_return = ::listen( sb_sockfd, MAXCONNECTIONS );
 
 
@@ -111,6 +112,7 @@ void ServerSocket::listen()
 
 void ServerSocket::accept(ServerSocket& new_SocketBroker)
 {
+	std::cout << "\nAccepting:" << std::endl;
 	socklen_t alen; /* length of address structure */
 	new_SocketBroker.sb_sockfd = ::accept(sb_sockfd, (struct sockaddr *) &sb_sockaddr, &alen );
 
@@ -138,12 +140,8 @@ std::string ServerSocket::read()
 	}
 
 	std::string inputMessage(buffer);
-	int pos1 = inputMessage.find(':');
-	int pos2 = inputMessage.find_last_of(':');
-	std::string message = inputMessage.substr(pos1+1, pos2-pos1-1);
-	std::string nodeName = inputMessage.substr(pos2 + 1);
 
-	std::cout << "\nReceived " << message << " from " << nodeName << " system time is " << SocketBroker::time_printer() << std::endl;
+	std::cout << "\nReceived message :" << inputMessage << " system time is " << SocketBroker::time_printer() << std::endl;
 	return inputMessage;
 }
 
@@ -153,8 +151,9 @@ void ServerSocket::write(std::string outputMessage)
 
 	int pos1 = outputMessage.find(':');
 	int pos2 = outputMessage.find_last_of(':');
-	std::string nodeName = outputMessage.substr(pos2 + 1);
-	result = "Sent " + outputMessage.substr(pos1+1, pos2-pos1-1) + " to " + nodeName + " " + SocketBroker::time_printer();
+	std::string nodeName = outputMessage.substr(pos2-1,1);
+	//result = "Sent " + outputMessage.substr(pos1+1, pos2-pos1-3) + " to " + nodeName + " " + SocketBroker::time_printer();
+	result = "ACK";
 	int n;
 
 	n = ::write(sb_sockfd,result.c_str(),result.length());
@@ -288,14 +287,11 @@ std::string ClientSocket::read()
 	return unpack;
 }
 
-void ClientSocket::write(std::string temp)
+void ClientSocket::write(std::string nodename)
 {
 	std::string inputMessage;
 	int n;
 
-	std::cout << "\nPlease enter the message: ";
-	std::getline(std::cin, inputMessage);
-	inputMessage = MessageHandler::serialize(inputMessage);
 	n = ::write(sb_sockfd,inputMessage.c_str(),inputMessage.length());
 
 	if (n < 0)
@@ -303,5 +299,5 @@ void ClientSocket::write(std::string temp)
 		std::cout << "\nWriting at client socket Failed" << std::endl;
 		exit(0);
 	}
-
+	std::cout << "\nMessage Sent to server" << std::endl;
 }

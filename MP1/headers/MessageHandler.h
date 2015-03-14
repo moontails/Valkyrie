@@ -11,7 +11,7 @@
 #include <iostream>
 #include <string.h>
 
-#define DELIMITER ':'
+#define DELIM ':'
 
 enum operationType { Delete, Get, Insert, Update };
 
