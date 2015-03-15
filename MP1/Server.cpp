@@ -1,7 +1,7 @@
 /*
  * server.cpp
  *
- *  Created on: Mar 8, 2015
+ *  Created on: Mar 15, 2015
  *      Author: moontails
  */
 
@@ -43,7 +43,7 @@ void client()
       std::string inputMessage = messageQ.front();
       messageQ.pop();
       mtx1.unlock();
-
+      std::cout<<"Sending-"<<inputMessage;
       for (std::map<std::string,std::pair<int,int>>::iterator it=myconfig->nodeInfo.begin(); it!=myconfig->nodeInfo.end(); ++it)
       {
         client.create();
@@ -86,6 +86,7 @@ void server()
   mtx1.lock();
   messageQ.push(inputCommand);
   std::cout << "\nPushed to the message queue on SERVER at " << ctime(&timestamp);
+  std::cout << "\n Message is-" << inputCommand << std::endl;
   mtx1.unlock();
 
   newserver.close();

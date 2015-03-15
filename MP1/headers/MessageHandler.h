@@ -2,7 +2,7 @@
  * MessageHandler.h
  *
  *  Created on: Mar 8, 2015
- *      Author: moontails
+ *      Author: moontails, emch2
  */
 
 #ifndef MESSAGEHANDLER_H_

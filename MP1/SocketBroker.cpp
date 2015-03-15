@@ -131,8 +131,12 @@ std::string ServerSocket::read()
 
 	bzero(buffer,256);
 
-	n = ::read(sb_sockfd,buffer,MAXRECV);
+	n = ::read(sb_sockfd,buffer,256);
 
+	/*for(int i = 0; i<256;i++)
+		std::cout << buffer[i];
+	printf("HERE-%d",n);
+	*/
 	if (n < 0)
 	{
 		std::cout << "\nReading at server socket Failed" << std::endl;
@@ -287,13 +291,13 @@ std::string ClientSocket::read()
 	return unpack;
 }
 
-void ClientSocket::write(std::string nodename)
+void ClientSocket::write(std::string inputMessage)
 {
-	std::string inputMessage;
+	//std::string inputMessage;
 	int n;
-
+	//std::cout << "\nInput -"<< inputMessage.c_str() << inputMessage.length() ;
 	n = ::write(sb_sockfd,inputMessage.c_str(),inputMessage.length());
-
+	//printf("Senteeer - %d",n);
 	if (n < 0)
 	{
 		std::cout << "\nWriting at client socket Failed" << std::endl;
