@@ -15,8 +15,8 @@
 #include <chrono>
 #include <fstream>
 #include <map>
+#include <vector>
 #include <queue>
-#include <ctime>
 #include <mutex>
 
 #define SERVER 12350
@@ -25,7 +25,7 @@ using namespace std;
 
 ConfigReader *myconfig = new ConfigReader();
 ConfigReader *Nodes = new ConfigReader();
-
+std::map<std::string, int> commandMap;
 std::queue<std::pair <std::string, std::chrono::system_clock::time_point>> messageQ;
 std::mutex mtx1;
 
@@ -60,11 +60,73 @@ void init_nodes(ConfigReader *result, const std::string fileName, const std::str
   }
 }
 
+void modelBasedBroadcast(std::string inputMessage, std::string hostname)
+{
+  ClientSocket client;
+
+  std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
+  std::string command = inputMessageVector.front();
+
+  // for commands get, insert, update, send to CentralServer for model 1 and 2
+  if(command == "get" || command == "insert" || command == "update")
+  {
+    std::string modelNumber = inputMessageVector.back();
+    if(modelNumber == "1" || modelNumber == "2")
+    {
+      client.create();
+      client.connect(SERVER, hostname);
+
+      client.write(inputMessage);
+      client.close();
+      return;
+    }
+  }
+
+  // else just broadcast for other cases
+  for (std::map<std::string,std::pair<int,int>>::iterator it=myconfig->nodeInfo.begin(); it!=Nodes->nodeInfo.end(); ++it)
+  {
+    client.create();
+    client.connect(it->second.first, hostname);
+
+    client.write(inputMessage);
+    client.close();
+  }
+
+}
+/*
+// function to handle the differect consistency models
+void consistencyModel(std::string inputMessage)
+{
+  std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
+  std::sting command = inputMessageVector.front();
+
+  switch(commandMap[command])
+  {
+    case 1: // Send
+      break;
+    case 2: // delete
+      break;
+    case 3: // get
+      break;
+    case 4: // insert
+      break;
+    case 5: // update
+      break;
+    case 6: // show-all
+      break;
+    case 7: // search
+      break;
+    default: // invalid command
+      std::cout << "\nInvalid Command, please enter one of {Send, delete, get, insert, update, show-all, search}" << std::endl;
+      break;
+  }
+
+}
+*/
+
 // poller thread to poll the message queue, and check if the delay amount of time has passed.
 void poller(int nodeDelay, std::string hostname)
 {
-
-  ClientSocket client;
   // to store time stamp variable
   std::chrono::system_clock::time_point stop, start;
 
@@ -89,15 +151,9 @@ void poller(int nodeDelay, std::string hostname)
         messageQ.pop();
         mtx1.unlock();
 
-        for (std::map<std::string,std::pair<int,int>>::iterator it=Nodes->nodeInfo.begin(); it!=Nodes->nodeInfo.end(); ++it)
-        {
-          client.create();
-          client.connect(it->second.first, hostname);
-
-          client.write(inputMessage);
-          client.close();
-        }
+        modelBasedBroadcast(inputMessage, hostname);
       }
+
     }
 
   }
@@ -125,7 +181,7 @@ void client(std::string hostName, std::string nodeName)
     std::getline(std::cin, inputMessage);
 
     // seriliaze the message
-    inputMessage = MessageHandler::serialize(inputMessage) + ":" + nodeName;
+    inputMessage = MessageHandler::serialize(inputMessage);// + ":" + nodeName;
     time_point = std::chrono::system_clock::now();
     timestamp = std::chrono::system_clock::to_time_t(time_point);
 
@@ -163,6 +219,7 @@ void server(int portno)
   server.accept(newserver);
 
   inputCommand = newserver.read();
+  //consistencyModel(inputCommand);
   //newserver.write(inputCommand);
   newserver.close();
   }
@@ -183,7 +240,13 @@ int main(int argc, char *argv[])
   std::string hostName = argv[2];
 
   init_nodes(Nodes, "config.txt", nodeName);
-
+  commandMap["Send"] = 1;
+  commandMap["delete"] = 2;
+  commandMap["get"] = 3;
+  commandMap["insert"] = 4;
+  commandMap["update"] = 5;
+  commandMap["show-all"] = 6;
+  commandMap["search"] = 7;
   /*
   // Checking if it built the other nodes info correctly from the config
   for (std::map<std::string,std::pair<int,int>>::iterator it=Nodes->nodeInfo.begin(); it!=Nodes->nodeInfo.end(); ++it)

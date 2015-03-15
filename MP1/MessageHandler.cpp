@@ -5,13 +5,14 @@
 #include <map>
 #include <vector>
 
+
 using namespace std;
 
 std::string MessageHandler::serialize(std::string inputMessage)
 {
 	std::string message = inputMessage;
 
-	std::replace(message.begin(), message.end(), ' ', DELIMITER);
+	std::replace(message.begin(), message.end(), ' ', DELIM);
 
 	return message;
 }
@@ -26,28 +27,24 @@ std::string MessageHandler::deserializeB(std::string inputMessage)
 	return nodeName;
 }
 
-std::vector<string> MessageHandler::deserialize(std::string inputMessage)
+std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 {
-	string delim = ":";
-	string token;
-	std::vector<string> command;
+	std::string token;
+	std::vector<std::string> command;
 
 	size_t pos = 0;
 	pos = 0;
-	while((pos = inputMessage.find(delim)) != std::string::npos){
+	while((pos = inputMessage.find(DELIM)) != std::string::npos){
 		token = inputMessage.substr(0,pos);
 		command.push_back(token);
-		inputMessage.erase(0,pos+delim.length());
+		inputMessage.erase(0,pos+1);
 	}
-	
-	command.push_back(inputMessage)
 
-
-
+	command.push_back(inputMessage);
 	return command;
 }
 
-
+/*
 std::void classify(string [] array)
 {
 	//more testing
@@ -61,7 +58,7 @@ std::void classify(string [] array)
 	}
 	if(command[0].compare("insert") == 0){
 		insertCommand(command[1],command[2], command[3]);
-	} 
+	}
 	if(command[0].compare("update")==0){
 		updateCommand(command[1], command[2], command[3]);
 	}
@@ -71,5 +68,6 @@ std::void classify(string [] array)
 
 
 	return;
-	
+
 }
+*/
