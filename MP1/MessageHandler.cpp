@@ -1,15 +1,9 @@
-/*
- * MessageHandler.cpp
- *
- *  Created on: Mar 8, 2015
- *      Author: moontails
- */
-
 #include "headers/MessageHandler.h"
 #include <iostream>
 #include <algorithm>
 #include <string>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -17,69 +11,65 @@ std::string MessageHandler::serialize(std::string inputMessage)
 {
 	std::string message = inputMessage;
 
-	std::replace(message.begin(), message.end(), ' ', DELIM);
+	std::replace(message.begin(), message.end(), ' ', DELIMITER);
 
 	return message;
 }
 
-std::string MessageHandler::deserialize(std::string inputMessage)
+std::string MessageHandler::deserializeB(std::string inputMessage)
 {
-	std::map<std::string, std::string> result ;// = MessageHandler::deserialize(inputMessage);
 	int pos1 = inputMessage.find(':');
-	std::string operation = inputMessage.substr(0,pos1);
-	result["operation"] = operation;
-	//int pos2 = inputMessage.find_last_of(':');
-	if(operation == "Send")
-	{
-		int pos2 = inputMessage.find(':', pos1+1);
-		std::string message = inputMessage.substr(pos1+1, pos2-pos1-1);
-		result["message"] = message;
+	int pos2 = inputMessage.find_last_of(':');
+	std::string message = inputMessage.substr(pos1+1, pos2-pos1-1);
+	std::cout << message << std::endl;
+	std::string nodeName = inputMessage.substr(pos2 + 1);
+	return nodeName;
+}
 
-		int pos3 = inputMessage.find(':', pos2+1);
-		std::string dstName = inputMessage.substr(pos2+1,1);
-		result["dstName"] = dstName;
+std::vector<string> MessageHandler::deserialize(std::string inputMessage)
+{
+	string delim = ":";
+	string token;
+	std::vector<string> command;
 
-		int pos4 = inputMessage.find(':', pos3+1);
-		std::string srcName = inputMessage.substr(pos3+1,1);
-		result["srcName"] = srcName;
+	size_t pos = 0;
+	pos = 0;
+	while((pos = inputMessage.find(delim)) != std::string::npos){
+		token = inputMessage.substr(0,pos);
+		command.push_back(token);
+		inputMessage.erase(0,pos+delim.length());
+	}
+	
+	command.push_back(inputMessage)
 
+
+
+	return command;
+}
+
+
+std::void classify(string [] array)
+{
+	//more testing
+	cout<<destination<<endl;
+
+	if(command[0].compare("delete")==0){
+		deleteCommand(command[1]);
 	}
-	else if(operation == "Delete")
-	{
-		int pos2 = inputMessage.find(':', pos1+1);
-		std::string inputKey = inputMessage.substr(pos1+1, inputMessage.length()-pos2-1);
-		result["key"] = inputKey;
+	if(command[0].compare("get") == 0){
+		getCommand(command[1], command[2]);
 	}
-	else if(operation == "Insert")
-	{
-		int pos2 = inputMessage.find(':', pos1+1);
-		int pos3 = inputMessage.find(':', pos2+1);
-		std::string inputKey = inputMessage.substr(pos1+1, pos2-pos1-1);
-		std::string inputVal = inputMessage.substr(pos2+1, pos3-pos2-1);
-		std::string model = inputMessage.substr(pos3+1, 1);
-		result["key"] = inputKey;
-		result["val"] = inputVal;
-		result["model"] = model;
+	if(command[0].compare("insert") == 0){
+		insertCommand(command[1],command[2], command[3]);
+	} 
+	if(command[0].compare("update")==0){
+		updateCommand(command[1], command[2], command[3]);
 	}
-	else if(operation == "Get")
-	{
-		int pos2 = inputMessage.find(':', pos1+1);
-		std::string inputKey = inputMessage.substr(pos1+1, pos2-pos1-1);
-		std::string model = inputMessage.substr(pos2+1, 1);
-		result["key"] = inputKey;
-		result["model"] = model;
+	if(command[0].compare("Send") == 0){
+		sendCommand(command[1], destination);
 	}
-	else if(operation == "Update")
-	{
-		int pos2 = inputMessage.find(':', pos1+1);
-		int pos3 = inputMessage.find(':', pos2+1);
-		int pos4 = inputMessage.find(':', pos3+1);
-		std::string inputKey = inputMessage.substr(pos2+1, pos3-pos2-1);
-		std::string inputVal = inputMessage.substr(pos3+1, pos4-pos3-1);
-		std::string model = inputMessage.substr(pos4+1, 1);
-		result["key"] = inputKey;
-		result["val"] = inputVal;
-		result["model"] = model;
-	}
-	return result["operation"];
+
+
+	return;
+	
 }
