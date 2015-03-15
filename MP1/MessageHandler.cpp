@@ -48,7 +48,6 @@ std::vector<string> MessageHandler::deserialize(std::string inputMessage)
 }
 
 
-/*
 std::void classify(string [] array)
 {
 	//more testing
@@ -74,4 +73,3 @@ std::void classify(string [] array)
 	return;
 	
 }
-*/
