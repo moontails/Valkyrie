@@ -37,6 +37,7 @@ std::string MessageHandler::deserializeB(std::string inputMessage)
 	return nodeName;
 }
 
+//Deserializes serialized messages, storing arguments into a string vector
 std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 {
 	std::string token;
@@ -53,6 +54,7 @@ std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 	return command;
 }
 
+//Serializes a nodes local copy of the key value store into a string. Used for key value store repairs
 std::string MessageHandler::serialize_map(std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map)
 {
 
@@ -69,6 +71,7 @@ std::string MessageHandler::serialize_map(std::map<int, std::pair<int,std::chron
 	return oss.str();
 }
 
+//Deserializes a serialized map repair string, creating a map with the contents of the string
 std::map<int, std::pair<int,std::chrono::system_clock::time_point>> MessageHandler::deserialize_map(std::string s)
 {
 	std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map;
@@ -98,31 +101,3 @@ std::map<int, std::pair<int,std::chrono::system_clock::time_point>> MessageHandl
 	}
 	return map;
 }
-
-/*
-std::void classify(string [] array)
-{
-	//more testing
-	cout<<destination<<endl;
-
-	if(command[0].compare("delete")==0){
-		deleteCommand(command[1]);
-	}
-	if(command[0].compare("get") == 0){
-		getCommand(command[1], command[2]);
-	}
-	if(command[0].compare("insert") == 0){
-		insertCommand(command[1],command[2], command[3]);
-	}
-	if(command[0].compare("update")==0){
-		updateCommand(command[1], command[2], command[3]);
-	}
-	if(command[0].compare("Send") == 0){
-		sendCommand(command[1], destination);
-	}
-
-
-	return;
-
-}
-*/

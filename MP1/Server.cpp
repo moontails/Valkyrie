@@ -2,7 +2,7 @@
  * server.cpp
  *
  *  Created on: Mar 15, 2015
- *      Author: moontails
+ *      Author: moontails, emch2
  */
 
 #include "headers/SocketBroker.h"
@@ -104,6 +104,9 @@ void server()
   server.close();
 }
 
+/* The inconsistency repair tool. Runs every 120 seconds. Ensures all nodes have a complete
+ *  replica of the key value store
+ */
 void map_repair()
 {
   while(1){

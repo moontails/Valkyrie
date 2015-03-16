@@ -14,12 +14,14 @@
 using namespace std;
 using std::chrono::system_clock;
 
+//Deletes an entry from the key value store
 void Storage::deleter(int key)
 {
   key_value.erase(key);
   std::cout<<"Key "<<key<<" deleted"<<std::endl;
 }
 
+//Retrieves the value of a specified key in a key value store
 int Storage::getter(int key)
 {
   auto it = key_value.find(key);
@@ -35,6 +37,7 @@ int Storage::getter(int key)
 
 }
 
+//Inserts a key value pair with a timestamp into a key value store
 void Storage::inserter(int key, int value)
 {
 
@@ -48,6 +51,7 @@ void Storage::inserter(int key, int value)
 
 }
 
+//Updates a key value pair and its timestamp in a key value store
 void Storage::updater(int key, int value)
 {
   int old_value = key_value.find(key)->second.first;
@@ -60,6 +64,7 @@ void Storage::updater(int key, int value)
   std::cout<<"Key "<<key<<" changed from "<<old_value<<" to "<<key_value.find(key)->second.first<<std::endl;
 }
 
+//Displays the contents of a local key value store
 void Storage::show_all()
 {
   std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it;
@@ -72,6 +77,7 @@ void Storage::show_all()
   }
 }
 
+//Special updater for eventual consistency that ensures the latest update is made
 void Storage::ec_updater(int key, int value, std::chrono::system_clock::time_point ts)
 {
 	int old_value = key_value.find(key)->second.first;
@@ -85,6 +91,7 @@ void Storage::ec_updater(int key, int value, std::chrono::system_clock::time_poi
 	}
 }
 
+//Special inserter for eventual consistency that ensure the latest insert is made
 void Storage::ec_inserter(int key, int value, std::chrono::system_clock::time_point ts)
 {
   if(ts>key_value.find(key)->second.second){

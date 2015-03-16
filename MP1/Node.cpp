@@ -445,6 +445,10 @@ void client(std::string hostName, std::string nodeName)
   }
 }
 
+/*
+ * Function - recieves the search command, broadcasts request to all nodes, recieves responses,
+ *            and creates a string based on which nodes responded positively
+  */   
 void search_all(std::string inputMessage)
 {
 
@@ -465,6 +469,9 @@ void search_all(std::string inputMessage)
     std::cout<<output<<std::endl;
 }
 
+/*
+ * Function - Searches local key value store for the given key. If found, returns Y, else N
+  */
 std::string searcher(std::string input)
 {
   std::vector<std::string> inputMessageVector = MessageHandler::deserialize(input);
