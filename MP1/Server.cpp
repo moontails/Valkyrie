@@ -81,7 +81,8 @@ void server()
   server.accept(newserver);
 
   inputCommand = newserver.read();
-  if(inputCommand.substr(0,6)=="return"){
+  if(inputCommand.substr(0,6)=="return")
+  {
     mtx2.lock();
     repairQ.push(inputCommand);
     std::cout << "\nPushed to the repair queue on SERVER at " << ctime(&timestamp);
@@ -89,25 +90,27 @@ void server()
   }
   else
   {
-  time_point = std::chrono::system_clock::now();
-  timestamp = std::chrono::system_clock::to_time_t(time_point);
+    time_point = std::chrono::system_clock::now();
+    timestamp = std::chrono::system_clock::to_time_t(time_point);
 
-  mtx1.lock();
-  messageQ.push(inputCommand);
-  std::cout << "\nPushed to the message queue on SERVER at " << ctime(&timestamp);
-  std::cout << "\n Message is-" << inputCommand << std::endl;
-  mtx1.unlock();
-}
+    mtx1.lock();
+    messageQ.push(inputCommand);
+    std::cout << "\nPushed to the message queue on SERVER at " << ctime(&timestamp);
+    std::cout << "\n Message is-" << inputCommand << std::endl;
+    mtx1.unlock();
+  }
   newserver.close();
   }
   server.close();
 }
 
-std::void map_repair(std::string input)
+void map_repair()
 {
   ClientSocket client;
-  
-  for(std::map<std::string, std::pair<int,int>>::iterator it = myconfig->nodeInfo.begin(); it != myconfig->nodeInfo.end(); ++it){
+  std::string hostname="localhost";
+
+  for(std::map<std::string, std::pair<int,int>>::iterator it = myconfig->nodeInfo.begin(); it != myconfig->nodeInfo.end(); ++it)
+  {
     client.create();
     client.connect(it->second.first, hostname);
     client.write("request");
@@ -132,13 +135,13 @@ std::void map_repair(std::string input)
   repairQ.pop();
   mtx2.unlock();
 
-  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_a = deserialize_map(string_a);
-  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_b = deserialize_map(string_b);
-  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_c = deserialize_map(string_c);
-  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_d = deserialize_map(string_d);
+  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_a = MessageHandler::deserialize_map(string_a);
+  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_b = MessageHandler::deserialize_map(string_b);
+  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_c = MessageHandler::deserialize_map(string_c);
+  std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_d = MessageHandler::deserialize_map(string_d);
 
   std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_all = map_a;
-  
+
   for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_b.begin(); it != map_b.end(); ++it){
     if(map_all.find(it->first) != map_all.end()){
       if(it->second.second > map_all.find(it->first)->second.second){
@@ -173,7 +176,7 @@ std::void map_repair(std::string input)
   }
 
   std::string serialized_map = "repair";
-  serialized_map.append(serialize(map_all));
+  serialized_map.append(MessageHandler::serialize_map(map_all));
 
   for(std::map<std::string, std::pair<int,int>>::iterator it = myconfig->nodeInfo.begin(); it != myconfig->nodeInfo.end(); ++it){
     client.create();

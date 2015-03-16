@@ -19,6 +19,7 @@
 #include <vector>
 #include <queue>
 #include <mutex>
+#include <sstream>
 
 #define SERVER 12350
 
@@ -28,15 +29,14 @@ using namespace std;
 Storage *keyvalStore = new Storage(); // local replica of the key value store
 
 ConfigReader *myConfig = new ConfigReader(); // to store all the node information
-//ConfigReader *nodes = new ConfigReader();
+ConfigReader *nodes = new ConfigReader();
 
 std::map<std::string, int> commandMap; // to map command to a numeral
 
 std::queue<std::pair <std::string, std::chrono::system_clock::time_point>> messageQ; // to hold the messages
 
 std::mutex mtx1; // mutex lock to gurantee mutual exclusion while reading the message queue
-
-/*
+std::mutex mtx2;
 // To initialize the other node information
 void init_nodes(ConfigReader *result, const std::string fileName, const std::string nodeName)
 {
@@ -67,8 +67,22 @@ void init_nodes(ConfigReader *result, const std::string fileName, const std::str
     configFile.close();
   }
 }
-*/
 
+std::string EC_handler(std::string inputMessage)
+{
+  std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
+  //std::string command = inputMessageVector.front();
+  int key = std::stoi(inputMessageVector[1]);
+  std::pair<int, std::chrono::system_clock::time_point> temp (keyvalStore->key_value[key]);
+
+  std::string result;
+
+  std::ostringstream oss;
+  oss << temp.first << "#" << std::chrono::system_clock::to_time_t(temp.second);
+  result = oss.str();
+
+  return result;
+}
 /*
 * Function - Extracts the operation and operands from the input message and finally executes it on local replica.
 */
@@ -108,6 +122,7 @@ void execute_operation(std::string inputMessage)
       break;
 
     case 6: // show-all
+      keyvalStore->show_all();
       break;
 
     case 7: // search
@@ -116,6 +131,139 @@ void execute_operation(std::string inputMessage)
     default: // invalid command
       std::cout << "\nInvalid Command, please enter one of {Send, delete, get, insert, update, show-all, search}" << std::endl;
       break;
+  }
+
+}
+
+void send_for_eventual(std::string inputMessage, std::string hostname, std::string modelNumber)
+{
+  std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
+  int key = std::stoi(inputMessageVector[1]);
+
+  ClientSocket client;
+  std::string message, timestamp;
+
+  if(modelNumber == "3")
+  {
+    //std::cout << "\nModelNumber is " << modelNumber << std::endl;
+    auto it = nodes->nodeInfo.begin();
+    std::advance(it, rand() % nodes->nodeInfo.size());
+    int random_portno = it->second.first;
+
+    client.create();
+
+    client.connect(random_portno, hostname);
+    client.write(inputMessage + ":EC");
+    message = client.read();
+    client.close();
+    //std::cout <<"\nMessage is---> "<< message;
+    int pos = message.find('#');
+    timestamp = message.substr(pos+1);
+    //std::cout << "\nTimestamp is " << timestamp << std::endl;
+    long t_int = atoi(timestamp.c_str());
+
+    time_t t_time = t_int;
+
+    std::chrono::system_clock::time_point temp1 = std::chrono::system_clock::from_time_t(t_time);
+
+    std::chrono::system_clock::time_point temp2 = keyvalStore->key_value.find(key)->second.second;
+
+    if(temp2 > temp1)
+    {
+      std::cout << "\nGet A " << inputMessageVector[1] << " (" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << ")" << std::endl;
+      std::cout << "\nGet B " << inputMessageVector[1] << " (" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
+    }
+    else
+    {
+      std::cout << "\nGet B " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
+      std::cout << "\nGet A " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << ")" << std::endl;
+    }
+
+  }
+  else
+  {
+    std::cout << "\nModelNumber is " << modelNumber << std::endl;
+    auto it = nodes->nodeInfo.begin();
+    std::advance(it, rand() % nodes->nodeInfo.size());
+    int random_portno1 = it->second.first;
+
+    client.create();
+
+    client.connect(random_portno1, hostname);
+    client.write(inputMessage + ":EC");
+    message = client.read();
+    client.close();
+
+    std::cout << message;
+    int pos = message.find('#');
+    timestamp = message.substr(pos+1);
+    std::cout << "\nTimestamp is " << timestamp << std::endl;
+    long t_int = std::stoi(timestamp);
+
+    time_t t_time = t_int;
+
+    std::chrono::system_clock::time_point temp1 = std::chrono::system_clock::from_time_t(t_time);
+
+    std::chrono::system_clock::time_point temp2 = keyvalStore->key_value.find(key)->second.second;
+
+    it = nodes->nodeInfo.begin();
+    std::advance(it, rand() % nodes->nodeInfo.size());
+    int random_portno2 = it->second.first;
+
+    while(random_portno2 == random_portno1)
+    {
+      it = nodes->nodeInfo.begin();
+      std::advance(it, rand() % nodes->nodeInfo.size());
+      random_portno2 = it->second.first;
+    }
+
+    client.create();
+
+    client.connect(random_portno2, hostname);
+    client.write(inputMessage + ":EC");
+    message = client.read();
+    client.close();
+    std::cout << message;
+    int pos1 = message.find('#');
+    timestamp = message.substr(pos1+1);
+    std::cout << "\nTimestamp is " << timestamp << std::endl;
+    t_int = std::stoi(timestamp);
+
+    t_time = t_int;
+
+    std::chrono::system_clock::time_point temp3 = std::chrono::system_clock::from_time_t(t_time);
+
+    if(temp2 > temp1)
+    {
+      if(temp2 > temp3)
+      {
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << ")" << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp3) << ")" << std::endl;
+      }
+      else
+      {
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp3) << ")" << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << ")" << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
+      }
+    }
+    else
+    {
+      if(temp1 > temp3)
+      {
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp3) << std::endl;
+      }
+      else
+      {
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp3) << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << std::endl;
+        std::cout << "\nGet " << inputMessageVector[1] << "(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << std::endl;
+      }
+    }
+
   }
 
 }
@@ -132,7 +280,7 @@ void send_to_server(std::string inputMessage, std::string hostname)
   client.create();
   // sending it to server!
   client.connect(SERVER, hostname);
-  std::cout << "\nSending message to server-" <<inputMessage<<std::endl;
+  //std::cout << "\nSending message to server-" <<inputMessage<<std::endl;
   client.write(inputMessage);
   client.close();
 }
@@ -185,6 +333,12 @@ void model_based_broadcast(std::string inputMessage, std::string hostname)
       execute_operation(inputMessage);
       return;
     }
+    else
+    {
+      // call eventual consistency
+      std::cout << "\nEventual Stage" << std::endl;
+      send_for_eventual(inputMessage, hostname, modelNumber);
+    }
   }
   // for commands insert, update, send to CentralServer for model 1 and 2
   else if(command == "insert" || command == "update")
@@ -194,6 +348,11 @@ void model_based_broadcast(std::string inputMessage, std::string hostname)
     {
       send_to_server(inputMessage, hostname);
       return;
+    }
+    else
+    {
+      // call eventual consistency
+      send_for_eventual(inputMessage, hostname, modelNumber);
     }
   }
   else
@@ -304,7 +463,26 @@ void server(int portno)
   server.accept(newserver);
 
   inputCommand = newserver.read();
-  execute_operation(inputCommand);
+  if( inputCommand.substr(inputCommand.length()-2) == "EC" )
+  {
+    std::string outputMessage = EC_handler(inputCommand);
+    std::cout << "\nOutput from EC node # " << outputMessage << std::endl;
+    newserver.write(outputMessage);
+  }
+  else if( inputCommand.substr(0,7) == "request")
+  {
+    std::cout << "\nProcessing repair request" << std::endl;
+    std::string outputMessage = MessageHandler::serialize_map(keyvalStore->key_value);
+    newserver.write("return"+outputMessage);
+  }
+  else if( inputComand.substr(0,6) == "return")
+  {
+    repair_store()
+  }
+  else
+  {
+    execute_operation(inputCommand);
+  }
   //newserver.write(inputCommand);
   newserver.close();
   }
@@ -332,7 +510,7 @@ int main(int argc, char *argv[])
   std::string nodeName = argv[1];
   std::string hostName = argv[2];
 
-  //init_nodes(nodes, "config.txt", nodeName);
+  init_nodes(nodes, "config.txt", nodeName);
   commandMap["Send"] = 1;
   commandMap["delete"] = 2;
   commandMap["get"] = 3;
