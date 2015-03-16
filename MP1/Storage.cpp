@@ -84,3 +84,15 @@ void Storage::ec_updater(int key, int value, std::chrono::system_clock::time_poi
 		std::cout<<"New update already stored. Key not updated"<<std::endl;
 	}
 }
+
+void Storage::ec_inserter(int key, int value, std::chrono::system_clock::time_point ts)
+{
+  if(ts>key_value.find(key)->second.second){
+    std::pair<int , std::chrono::system_clock::time_point> new_value_time (value, ts);
+    key_value.insert(std::pair<int, std::pair<int, std::chrono::system_clock::time_point>>(key, new_value_time));
+    std::cout<<"Inserted key "<<key<<std::endl; 
+  }
+  else{
+    std::cout<<"New version already insterted. Key value not inserted"<<std::endl;
+  }
+}
