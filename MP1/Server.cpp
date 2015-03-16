@@ -105,16 +105,17 @@ void server()
 }
 
 /* The inconsistency repair tool. Runs every 120 seconds. Ensures all nodes have a complete
- *  replica of the key value store
- */
+*  replica of the key value store
+*/
+
 void map_repair()
 {
-  while(1){
+  ClientSocket client;
+  std::string hostname="localhost";
 
-    std::this_thread::sleep_for(std::chrono::seconds(120));
-
-    ClientSocket client;
-    std::string hostname="localhost";
+  while(1)
+  {
+    std::this_thread::sleep_for(std::chrono::seconds(300));
 
     for(std::map<std::string, std::pair<int,int>>::iterator it = myconfig->nodeInfo.begin(); it != myconfig->nodeInfo.end(); ++it)
     {
@@ -125,10 +126,10 @@ void map_repair()
     }
 
 
-    while(1){
-      if(repairQ.size()==4){
+    while(1)
+    {
+      if(repairQ.size()==4)
         break;
-      }
     }
 
     mtx2.lock();
@@ -149,31 +150,42 @@ void map_repair()
 
     std::map<int, std::pair<int, std::chrono::system_clock::time_point>> map_all = map_a;
 
-    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_b.begin(); it != map_b.end(); ++it){
-      if(map_all.find(it->first) != map_all.end()){
-        if(it->second.second > map_all.find(it->first)->second.second){
+    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_b.begin(); it != map_b.end(); ++it)
+    {
+      if(map_all.find(it->first) != map_all.end())
+      {
+        if(it->second.second > map_all.find(it->first)->second.second)
+        {
           map_all[it->first] = it->second;
         }
       }
-      else{
+      else
+      {
         map_all[it->first] = it->second;
       }
     }
 
-    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_c.begin(); it != map_c.end(); ++it){
-      if(map_all.find(it->first) != map_all.end()){
-        if(it->second.second > map_all.find(it->first)->second.second){
+    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_c.begin(); it != map_c.end(); ++it)
+    {
+      if(map_all.find(it->first) != map_all.end())
+      {
+        if(it->second.second > map_all.find(it->first)->second.second)
+        {
           map_all[it->first] = it->second;
         }
       }
-      else{
+      else
+      {
         map_all[it->first] = it->second;
       }
     }
 
-    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_d.begin(); it != map_d.end(); ++it){
-      if(map_all.find(it->first) != map_all.end()){
-        if(it->second.second > map_all.find(it->first)->second.second){
+    for(std::map<int, std::pair<int, std::chrono::system_clock::time_point>>::iterator it = map_d.begin(); it != map_d.end(); ++it)
+    {
+      if(map_all.find(it->first) != map_all.end())
+      {
+        if(it->second.second > map_all.find(it->first)->second.second)
+        {
           map_all[it->first] = it->second;
         }
       }
@@ -191,7 +203,9 @@ void map_repair()
       client.write(serialized_map);
       client.close();
     }
+
   }
+
 }
 
 int main(int argc, char *argv[])

@@ -29,8 +29,8 @@ public:
   int getter(int);
   void inserter(int, int);
   void updater(int, int);
-  void ec_updater(int key, int value, std::chrono::system_clock::time_point ts);
-  
+  void ec_updater(int, int, std::chrono::system_clock::time_point);
+  void ec_inserter(int, int, std::chrono::system_clock::time_point);
   void show_all();
 };
 
