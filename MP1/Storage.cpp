@@ -71,3 +71,16 @@ void Storage::show_all()
     std::cout<<"Key: "<<it->first<<", Value: "<<it->second.first<<", Timestamp: "<<ctime(&t)<<std::endl;
   }
 }
+
+void Storage::ec_updater(int key, int value, std::chrono::system_clock::time_point ts)
+{
+	int old_value = key_value.find(key)->second.first;
+	if(ts > key_value.find(key)->second.second){
+		std::pair<int, std::chrono::system_clock::time_point> new_value_time (value, ts);
+		key_value[key] = new_value_time;
+		std::cout<<"Key "<<key<<" changed from "<<old_value<<" to "<<key_value.find(key)->second.first<<std::endl;
+	}
+	else{
+		std::cout<<"New update already stored. Key not updated"<<std::endl;
+	}
+}

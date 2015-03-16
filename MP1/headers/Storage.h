@@ -22,18 +22,16 @@ class Storage
 {
 
 public:
+
   std::map<int, std::pair<int, std::chrono::system_clock::time_point>> key_value;
 
-  //i dont think these need models??
   void deleter(int);
   int getter(int);
   void inserter(int, int);
   void updater(int, int);
-
-  //possibly higher up i think
-  //std::void repair();
+  void ec_updater(int key, int value, std::chrono::system_clock::time_point ts);
+  
   void show_all();
-  //std::void search(int key);
 };
 
 #endif  /* STORAGE_H_ */
