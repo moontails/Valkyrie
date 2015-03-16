@@ -467,7 +467,7 @@ void search_all(std::string inputMessage)
 
 std::string searcher(std::string input)
 {
-  std::vector<std::string> inputMessageVector = deserialize(input);
+  std::vector<std::string> inputMessageVector = MessageHandler::deserialize(input);
   std::string found;
   int temp = keyvalStore->getter(inputMessageVector[1]);
   if(temp ==-1){
