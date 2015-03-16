@@ -53,23 +53,23 @@ std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 	return command;
 }
 
-std::string serialize_map(std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map)
+std::string MessageHandler::serialize_map(std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map)
 {
-	
+
 	std::ostringstream oss;
 	std::map<int, std::pair<int,std::chrono::system_clock::time_point>>::iterator it;
 	std::time_t t;
-	
+
 	for(it = map.begin(); it != map.end(); ++it){
 		t = system_clock::to_time_t(it->second.second);
 		oss<<it->first<<"#"<<it->second.first<<"#"<<t<<"_";
-		
+
 	}
 
 	return oss.str();
 }
 
-std::map<int, std::pair<int,std::chrono::system_clock::time_point>> deserialize_map(std::string s)
+std::map<int, std::pair<int,std::chrono::system_clock::time_point>> MessageHandler::deserialize_map(std::string s)
 {
 	std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map;
 	std::string token;
@@ -78,7 +78,7 @@ std::map<int, std::pair<int,std::chrono::system_clock::time_point>> deserialize_
 	std::chrono::system_clock::time_point tp;
 	std::time_t t;
 	std::vector<std::string> entry;
-	
+
 	while((pos = s.find("_")) != std::string::npos){
 		token = s.substr(0,pos);
 		size_t pos_token = 0;
@@ -87,7 +87,7 @@ std::map<int, std::pair<int,std::chrono::system_clock::time_point>> deserialize_
 			entry.push_back(token2);
 			token.erase(0,pos_token+1);
 		}
-		
+
 		entry.push_back(token);
 
 		t = stoi(entry[2]);
