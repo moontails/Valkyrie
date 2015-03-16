@@ -126,10 +126,10 @@ void ServerSocket::accept(ServerSocket& new_SocketBroker)
 
 std::string ServerSocket::read()
 {
-	char buffer[256];
+	char buffer[MAXRECV];
 	int n;
 
-	bzero(buffer,256);
+	bzero(buffer,MAXRECV);
 
 	n = ::read(sb_sockfd,buffer,256);
 
@@ -151,6 +151,7 @@ std::string ServerSocket::read()
 
 void ServerSocket::write(std::string outputMessage)
 {
+	/*
 	std::string result;
 
 	int pos1 = outputMessage.find(':');
@@ -158,9 +159,10 @@ void ServerSocket::write(std::string outputMessage)
 	std::string nodeName = outputMessage.substr(pos2-1,1);
 	//result = "Sent " + outputMessage.substr(pos1+1, pos2-pos1-3) + " to " + nodeName + " " + SocketBroker::time_printer();
 	result = "ACK";
+	*/
 	int n;
 
-	n = ::write(sb_sockfd,result.c_str(),result.length());
+	n = ::write(sb_sockfd,outputMessage.c_str(),outputMessage.length());
 
 	if (n < 0)
 	{
@@ -273,10 +275,10 @@ void ClientSocket::connect(int port, std::string hostname)
 
 std::string ClientSocket::read()
 {
-	char buffer[256];
+	char buffer[MAXRECV];
 	int n;
 
-	bzero(buffer,256);
+	bzero(buffer,MAXRECV);
 
 	n = ::read(sb_sockfd,buffer,MAXRECV);
 
