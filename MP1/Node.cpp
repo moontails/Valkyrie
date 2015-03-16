@@ -126,6 +126,7 @@ void execute_operation(std::string inputMessage)
       break;
 
     case 7: // search
+      search_all(inputMessage);
       break;
 
     default: // invalid command
@@ -444,6 +445,39 @@ void client(std::string hostName, std::string nodeName)
   }
 }
 
+void search_all(std::string inputMessage)
+{
+
+  std::string response;
+  std::string output;
+  for(std::map<std::string, std::pair<int,int>>::iterator it = myConfig->nodeInfo.begin(); it != myConfig->nodeInfo.end(); ++it)
+    {
+      client.create();
+      client.connect(it->second.first, hostname);
+      client.write(inputMessage);
+      response = client.read();
+      client.close();
+      if(response == "Y"){
+        output.append(it->first);
+        output.append(" ");
+      }
+    }
+    std::cout<<output<<std::endl;
+}
+
+std::string searcher(std::string input)
+{
+  std::vector<std::string> inputMessageVector = deserialize(input);
+  std::string found;
+  int temp = keyvalStore->getter(inputMessageVector[1]);
+  if(temp ==-1){
+    found = "N";
+  }
+  else
+    found = "Y";
+  return found;
+}
+
 /*
  * Function - Server thread to listen for incoming messages.
  *          _ It then hands it over the message to the execute_operation.
@@ -478,6 +512,11 @@ void server(int portno)
   else if( inputComand.substr(0,6) == "return")
   {
     repair_store()
+  }
+  else if(inputCommand.substr(0,6) == "search")
+  {
+    std::string outputMessage = searcher(inputCommand);
+    newserver.write(outputMessage);
   }
   else
   {
