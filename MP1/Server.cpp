@@ -25,7 +25,9 @@ using namespace std;
 
 ConfigReader *myconfig = new ConfigReader();
 std::queue<std::string> messageQ;
+std::queue<std::string> repairQ;
 std::mutex mtx1;
+std::mutex mtx2;
 
 // client thread to poll the message queue, and then broadcast it to all nodes
 void client()
@@ -79,7 +81,14 @@ void server()
   server.accept(newserver);
 
   inputCommand = newserver.read();
-
+  if(inputCommand.substr(0,6)=="repair"){
+    mtx2.lock();
+    repairQ.push(inputCommand);
+    std::cout << "\nPushed to the repair queue on SERVER at " << ctime(&timestamp);
+    mtx2.unlock();
+  }
+  else
+  {
   time_point = std::chrono::system_clock::now();
   timestamp = std::chrono::system_clock::to_time_t(time_point);
 
@@ -88,7 +97,7 @@ void server()
   std::cout << "\nPushed to the message queue on SERVER at " << ctime(&timestamp);
   std::cout << "\n Message is-" << inputCommand << std::endl;
   mtx1.unlock();
-
+}
   newserver.close();
   }
   server.close();

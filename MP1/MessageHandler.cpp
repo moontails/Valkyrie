@@ -12,9 +12,11 @@
 #include <string>
 #include <map>
 #include <vector>
-
+#include <sstream>
+#include <chrono>
 
 using namespace std;
+using std::chrono::system_clock;
 
 std::string MessageHandler::serialize(std::string inputMessage)
 {
@@ -41,7 +43,6 @@ std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 	std::vector<std::string> command;
 
 	size_t pos = 0;
-	pos = 0;
 	while((pos = inputMessage.find(DELIM)) != std::string::npos){
 		token = inputMessage.substr(0,pos);
 		command.push_back(token);
@@ -50,6 +51,52 @@ std::vector<std::string> MessageHandler::deserialize(std::string inputMessage)
 
 	command.push_back(inputMessage);
 	return command;
+}
+
+std::string serialize_map(std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map)
+{
+	
+	std::ostringstream oss;
+	std::map<int, std::pair<int,std::chrono::system_clock::time_point>>::iterator it;
+	std::time_t t;
+	
+	for(it = map.begin(); it != map.end(); ++it){
+		t = system_clock::to_time_t(it->second.second);
+		oss<<it->first<<"#"<<it->second.first<<"#"<<t<<"_";
+		
+	}
+
+	return oss.str();
+}
+
+std::map<int, std::pair<int,std::chrono::system_clock::time_point>> deserialize_map(std::string s)
+{
+	std::map<int, std::pair<int,std::chrono::system_clock::time_point>> map;
+	std::string token;
+	size_t pos = 0;
+	std::string token2;
+	std::chrono::system_clock::time_point tp;
+	std::time_t t;
+	std::vector<std::string> entry;
+	
+	while((pos = s.find("_")) != std::string::npos){
+		token = s.substr(0,pos);
+		size_t pos_token = 0;
+		while((pos_token = token.find("#")) != std::string::npos){
+		    token2 = token.substr(0,pos_token);
+			entry.push_back(token2);
+			token.erase(0,pos_token+1);
+		}
+		
+		entry.push_back(token);
+
+		t = stoi(entry[2]);
+		tp = system_clock::from_time_t(t);
+		map[stoi(entry[0])] = std::make_pair(stoi(entry[1]), tp);
+		entry.erase(entry.begin(),entry.end());
+		s.erase(0, pos+1);
+	}
+	return map;
 }
 
 /*
