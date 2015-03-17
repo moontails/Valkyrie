@@ -1,15 +1,15 @@
 /*
- * server.cpp
+ * Node.cpp
  *
  *  Created on: Mar 8, 2015
- *      Author: moontails
+ *      Author: moontails, emch2
  */
 
 #include "headers/SocketBroker.h"
 #include "headers/ConfigReader.h"
 #include "headers/MessageHandler.h"
 #include "headers/Storage.h"
-
+#include <unistd.h>
 #include <thread>
 #include <ctime>
 #include <ratio>
@@ -25,6 +25,7 @@
 
 using namespace std;
 
+std::string nodeName, hostName;
 
 Storage *keyvalStore = new Storage(); // local replica of the key value store
 
@@ -148,14 +149,30 @@ std::string EC_handler(std::string inputMessage)
 */
 void execute_operation(std::string inputMessage, int flag)
 {
-  std::cout << "\nInput message is-" << inputMessage << std::endl;
+  //std::cout << "\nInput message is-" << inputMessage << std::endl;
   std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
   std::string command = inputMessageVector.front();
-  int key, val;
+
+  ClientSocket client;
+  std::string nodeToSend, hostname = "localhost", timestamp;
+  std::chrono::system_clock::time_point tp;
+  time_t t_time;
+  long t_int;
+  int key, val, port_to_send;
+
   //std::cout << "\n Command is-" << command <<std::endl;
   switch(commandMap[command])
   {
     case 1: // Send
+
+      nodeToSend = inputMessageVector[2];
+      port_to_send = myConfig->nodeInfo[nodeToSend].first;
+      client.create();
+      client.connect(port_to_send, hostname);
+      client.write(inputMessage+":"+nodeName);
+      t_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      std::cout << "\nSent " << inputMessageVector[1] << " to " << nodeToSend << ", system time is " << ctime(&t_time) << std::endl;
+      client.close();
 
       break;
 
@@ -180,11 +197,11 @@ void execute_operation(std::string inputMessage, int flag)
       {
         key = std::stoi(inputMessageVector[1]);
         val = std::stoi(inputMessageVector[2]);
-        std::string timestamp = inputMessageVector[3];
+        timestamp = inputMessageVector[3];
         //std::cout << "\nTimestamp is " << timestamp << std::endl;
-        long t_int = atoi(timestamp.c_str());
-        time_t t_time = t_int;
-        std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(t_time);
+        t_int = atoi(timestamp.c_str());
+        t_time = t_int;
+        tp = std::chrono::system_clock::from_time_t(t_time);
         keyvalStore->ec_inserter(key, val, tp);
       }
 
@@ -201,11 +218,11 @@ void execute_operation(std::string inputMessage, int flag)
       {
         key = std::stoi(inputMessageVector[1]);
         val = std::stoi(inputMessageVector[2]);
-        std::string timestamp = inputMessageVector[3];
+        timestamp = inputMessageVector[3];
         //std::cout << "\nTimestamp is " << timestamp << std::endl;
-        long t_int = atoi(timestamp.c_str());
-        time_t t_time = t_int;
-        std::chrono::system_clock::time_point tp = std::chrono::system_clock::from_time_t(t_time);
+        t_int = atoi(timestamp.c_str());
+        t_time = t_int;
+        tp = std::chrono::system_clock::from_time_t(t_time);
         keyvalStore->ec_updater(key, val, tp);
       }
 
@@ -291,7 +308,7 @@ void send_for_eventual(std::string inputMessage, std::string hostname, std::stri
   }
   else
   {
-    std::cout << "\nModelNumber is " << modelNumber << std::endl;
+    //std::cout << "\nModelNumber is " << modelNumber << std::endl;
     auto it = nodes->nodeInfo.begin();
     std::advance(it, rand() % nodes->nodeInfo.size());
     int random_portno1 = it->second.first;
@@ -341,7 +358,7 @@ void send_for_eventual(std::string inputMessage, std::string hostname, std::stri
     //std::cout << message;
     int pos = message.find('#');
     timestamp = message.substr(pos+1);
-    std::cout << "\nTimestamp1 is " << timestamp << std::endl;
+    //std::cout << "\nTimestamp1 is " << timestamp << std::endl;
     long t_int = std::stoi(timestamp);
 
     time_t t_time = t_int;
@@ -354,7 +371,7 @@ void send_for_eventual(std::string inputMessage, std::string hostname, std::stri
     //std::cout << message1;
     int pos1 = message1.find('#');
     timestamp = message1.substr(pos1+1);
-    std::cout << "\nTimestamp2 is " << timestamp << std::endl;
+    //std::cout << "\nTimestamp2 is " << timestamp << std::endl;
     t_int = std::stoi(timestamp);
 
     t_time = t_int;
@@ -387,7 +404,7 @@ void send_for_eventual(std::string inputMessage, std::string hostname, std::stri
       else
       {
         std::cout << "\nGet (" << inputMessageVector[1] << ") = (" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp3) << ")" << std::endl;
-        std::cout << "\nExamined:\t(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
+        std::cout << "\nExamined:\n\t(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp1) << ")" << std::endl;
         std::cout << "\n\t(" << message.substr(0,pos) << "," << std::chrono::system_clock::to_time_t(temp2) << ")" << std::endl;
       }
     }
@@ -426,7 +443,7 @@ void send_broadcast(std::string inputMessage, std::string hostname)
   {
     client.create();
     client.connect(it->second.first, hostname);
-    std::cout << "\nSending message-" <<inputMessage<<std::endl;
+    //std::cout << "\nSending message-" <<inputMessage<<std::endl;
     client.write(inputMessage);
     client.close();
   }
@@ -464,7 +481,7 @@ void model_based_broadcast(std::string inputMessage, std::string hostname, std::
     else if(modelNumber == "3" || modelNumber == "4")
     {
       // call eventual consistency
-      std::cout << "\nEventual Stage" << std::endl;
+      //std::cout << "\nEventual Stage" << std::endl;
       send_for_eventual(inputMessage, hostname, modelNumber, tp);
     }
     else
@@ -492,7 +509,7 @@ void model_based_broadcast(std::string inputMessage, std::string hostname, std::
       execute_operation(inputMessage, 1);
     }
   }
-  else if(command == "search" || command == "show-all")
+  else if(command == "search" || command == "show-all" || command == "send")
   {
     execute_operation(inputMessage);
   }
@@ -531,6 +548,16 @@ void poller(int nodeDelay, std::string hostname)
 
         send_broadcast(inputMessage, hostname);
       }
+      else if(inputMessage.substr(0,5) == "delay" )
+      {
+        mtx1.lock();
+        messageQ.pop();
+        mtx1.unlock();
+        // deserialize the message first
+        std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputMessage);
+        std::cout << "\nDelay Command, delaying for " << inputMessageVector[1] << std::endl;
+        sleep(std::stof(inputMessageVector[1]));
+      }
       else
       {
         //std::cout << "\nFront of MQ-" << inputMessage << std::endl;
@@ -561,8 +588,6 @@ void poller(int nodeDelay, std::string hostname)
  */
 void client(std::string hostName, std::string nodeName)
 {
-  using std::chrono::system_clock;
-
   std::pair <std::string, std::chrono::system_clock::time_point> temp;
 
   // to store time stamp variable
@@ -585,7 +610,7 @@ void client(std::string hostName, std::string nodeName)
     timestamp = std::chrono::system_clock::to_time_t(time_point);
 
     temp.first = inputMessage;
-    std::cout << "Serialized Message is-" << inputMessage << std::endl;
+    //std::cout << "Serialized Message is-" << inputMessage << std::endl;
     temp.second = time_point;
 
     // acquire mutex lock and push into the current node's message queue and then unlock it.
@@ -619,7 +644,7 @@ void server(int portno)
   if( inputCommand.substr(inputCommand.length()-2) == "EC" )
   {
     std::string outputMessage = EC_handler(inputCommand);
-    std::cout << "\nOutput from EC node # " << outputMessage << std::endl;
+    //std::cout << "\nOutput from EC node # " << outputMessage << std::endl;
     newserver.write(outputMessage);
   }
   else if( inputCommand.substr(0,7) == "request")
@@ -639,6 +664,15 @@ void server(int portno)
     std::string outputMessage = local_searcher(inputCommand);
     newserver.write(outputMessage);
   }
+  else if(inputCommand.substr(0,4) == "send")
+  {
+    //todo
+    std::vector<std::string> inputMessageVector = MessageHandler::deserialize(inputCommand);
+    // to display time
+    std::chrono::system_clock::time_point time_point = std::chrono::system_clock::now();
+    std::time_t timestamp = std::chrono::system_clock::to_time_t(time_point);
+    std::cout << "\nReceived " << inputMessageVector[1] << "from " << inputMessageVector[3] << ", system time is " << ctime(&timestamp) << std::endl;
+  }
   else
   {
     execute_operation(inputCommand);
@@ -647,6 +681,37 @@ void server(int portno)
   newserver.close();
   }
   server.close();
+}
+
+void readFile(const std::string filename)
+{
+  std::cout << "\nLoading file to queue" << std::endl;
+  fstream inputFile (filename.c_str());
+
+
+  std::pair <std::string, std::chrono::system_clock::time_point> temp;
+
+  // to store command and timestamp to message queue
+  std::chrono::system_clock::time_point time_point;
+  std::string line;
+  std::time_t timestamp;
+
+
+  if (inputFile.is_open())
+  {
+    while ( getline(inputFile,line) )
+    {
+      time_point = std::chrono::system_clock::now();
+      timestamp = std::chrono::system_clock::to_time_t(time_point);
+
+      temp.first = line;
+      temp.second = time_point;
+
+      messageQ.push(temp);
+      std::cout << "\nLoaded command " << line;
+    }
+    inputFile.close();
+  }
 }
 
 /*
@@ -667,11 +732,11 @@ int main(int argc, char *argv[])
   // read the information about nodes
   myConfig->readConfig("config.txt");
 
-  std::string nodeName = argv[1];
-  std::string hostName = argv[2];
+  nodeName = argv[1];
+  hostName = argv[2];
 
   init_nodes(nodes, "config.txt", nodeName);
-  commandMap["Send"] = 1;
+  commandMap["send"] = 1;
   commandMap["delete"] = 2;
   commandMap["get"] = 3;
   commandMap["insert"] = 4;
@@ -691,15 +756,30 @@ int main(int argc, char *argv[])
   std::cout << "\t\t" << nodeName << "\t" << portno << "\t" << delay << std::endl;
   std::cout << "\n=========================================" << std::endl;
 
-  // spawn the three threads
-  std::thread server_thread (server, portno);
-  std::thread client_thread (client, hostName, nodeName);
-  std::thread poller_thread (poller, delay, hostName);
+  if (argc == 4)
+  {
+    std::string filename = argv[3];
+    readFile(filename);
+    // spawn the three threads
+    std::thread server_thread (server, portno);
+    std::thread poller_thread (poller, delay, hostName);
 
-  // wait for them to complete their execution
-  server_thread.join();
-  client_thread.join();
-  poller_thread.join();
+    // wait for them to complete their execution
+    server_thread.join();
+    poller_thread.join();
+  }
+  else
+  {
+    // spawn the three threads
+    std::thread server_thread (server, portno);
+    std::thread client_thread (client, hostName, nodeName);
+    std::thread poller_thread (poller, delay, hostName);
+
+    // wait for them to complete their execution
+    server_thread.join();
+    client_thread.join();
+    poller_thread.join();
+  }
 
   return 0;
 }

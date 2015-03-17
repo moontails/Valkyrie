@@ -58,7 +58,7 @@ void ServerSocket::create()
 	}
 	else
 	{
-		std::cout << "\nNew ServerSocket created" << std::endl;
+		//std::cout << "\nNew ServerSocket created" << std::endl;
 	}
 
 }
@@ -85,7 +85,7 @@ void ServerSocket::bind(int port)
 		std::cout << "\nBind Failed" << std::endl;
 		exit(0);
 	}
-	std::cout << "\nBinded to port: " << port << std::endl;
+	//std::cout << "\nBinded to port: " << port << std::endl;
 }
 
 
@@ -97,7 +97,7 @@ void ServerSocket::listen()
 		std::cout << "\nCreate socket before listen" << std::endl;
 		exit(0);
 	}
-	std::cout << "\nListening:" << std::endl;
+	//std::cout << "\nListening:" << std::endl;
 	int listen_return = ::listen( sb_sockfd, MAXCONNECTIONS );
 
 
@@ -112,7 +112,7 @@ void ServerSocket::listen()
 
 void ServerSocket::accept(ServerSocket& new_SocketBroker)
 {
-	std::cout << "\nAccepting:" << std::endl;
+	//std::cout << "\nAccepting:" << std::endl;
 	socklen_t alen; /* length of address structure */
 	new_SocketBroker.sb_sockfd = ::accept(sb_sockfd, (struct sockaddr *) &sb_sockaddr, &alen );
 
@@ -133,10 +133,6 @@ std::string ServerSocket::read()
 
 	n = ::read(sb_sockfd,buffer,256);
 
-	/*for(int i = 0; i<256;i++)
-		std::cout << buffer[i];
-	printf("HERE-%d",n);
-	*/
 	if (n < 0)
 	{
 		std::cout << "\nReading at server socket Failed" << std::endl;
@@ -145,21 +141,11 @@ std::string ServerSocket::read()
 
 	std::string inputMessage(buffer);
 
-	std::cout << "\nReceived message :" << inputMessage << " system time is " << SocketBroker::time_printer() << std::endl;
 	return inputMessage;
 }
 
 void ServerSocket::write(std::string outputMessage)
 {
-	/*
-	std::string result;
-
-	int pos1 = outputMessage.find(':');
-	int pos2 = outputMessage.find_last_of(':');
-	std::string nodeName = outputMessage.substr(pos2-1,1);
-	//result = "Sent " + outputMessage.substr(pos1+1, pos2-pos1-3) + " to " + nodeName + " " + SocketBroker::time_printer();
-	result = "ACK";
-	*/
 	int n;
 
 	n = ::write(sb_sockfd,outputMessage.c_str(),outputMessage.length());
@@ -230,7 +216,7 @@ void ClientSocket::create()
 	}
 	else
 	{
-		std::cout << "\nNew ClientSocket created" << std::endl;
+		//std::cout << "\nNew ClientSocket created" << std::endl;
 	}
 
 }
@@ -289,7 +275,6 @@ std::string ClientSocket::read()
 	}
 
 	std::string unpack(buffer);
-	std::cout << buffer;
 	return unpack;
 }
 
@@ -305,5 +290,5 @@ void ClientSocket::write(std::string inputMessage)
 		std::cout << "\nWriting at client socket Failed" << std::endl;
 		exit(0);
 	}
-	std::cout << "\nMessage Sent to server" << std::endl;
+	//std::cout << "\nMessage Sent to server" << std::endl;
 }
