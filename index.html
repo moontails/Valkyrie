@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Project Valkyrie : A distributed key-value storage system">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Project Valkyrie</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/moontails/Valkyrie">View on GitHub</a>
+
+          <h1 id="project_title">Project Valkyrie</h1>
+          <h2 id="project_tagline">A distributed key-value storage system</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/moontails/Valkyrie/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/moontails/Valkyrie/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="project-valkyrie" class="anchor" href="#project-valkyrie" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Valkyrie</h1>
+
+<p>A distributed key-value storage system that provides</p>
+
+<ul>
+<li>Linearizability</li>
+<li>Sequential Consistency </li>
+<li>Eventual Consistency </li>
+</ul>
+
+<p>Our storage is composed of 4 servers and each server may potentially store the value for each key in the shared datastore. The storage sytem considers both Key and Value to be positive integers.</p>
+
+<p>In the first step, we implemented a communication between servers that simulates a delay. Step two was built upon step one to implement the Key-Value Store with different consistency models. A central server is used to provide totally ordered broadcast. </p>
+
+<h1>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h1>
+
+<ul>
+<li>Search function that displays the list of servers that store replicas of the key being searched.</li>
+<li>Display function that the key-value pairs stored on the node performing this command.</li>
+<li>Inconsistency Repair to tackle different replicas not being consistent with each other (due to eventual consistency). We have a monitoring tool that runs periodically and ensures that all replicas eventually receive all updates.</li>
+</ul>
+
+<h1>
+<a id="compiling" class="anchor" href="#compiling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compiling</h1>
+
+<p>The project can be compiled using the folloing commands.</p>
+
+<p>1) Compiling the Node</p>
+
+<pre><code>g++ -o node Node.cpp ConfigReader.cpp SocketBroker.cpp MessageHandler.cpp Storage.cpp -pthread -std=c++11
+</code></pre>
+
+<p>2) Compiling the Server</p>
+
+<pre><code>g++ -o server Server.cpp ConfigReader.cpp SocketBroker.cpp MessageHandler.cpp Storage.cpp -pthread -std=c++11
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Project Valkyrie maintained by <a href="https://github.com/moontails">moontails</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
